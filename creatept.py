@@ -7,6 +7,24 @@
 # - space: 2 same colors separated by 1 color (rrr,rgr,rbr)
 
 import random
+import pygame
+
+pygame.init()
+
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Pattern Game")
+
+# Load system font syntax from https://www.pygame.org/docs/ref/font.html#pygame.font.SysFont
+font = pygame.font.SysFont(None, 40)
+
+# Colors
+RED = (220,50,50)
+GREEN = (50,200,50)
+BLUE = (50,50,220)
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+GRAY = (200,200,200)
 
 patterns = ["r_next", "g_next", "b_next", "r_space", "g_space"," b_space"]
 
@@ -19,8 +37,7 @@ sequence1 = ["r", "r", "g", "g", "r"]
 sequence2 = ["r", "b", "r", "b", "r"]
 
 def check_pattern(pattern, sequence):
-    # String slicing taken from https://stackoverflow.com/questions/7983820/get-the-last-4-characters-of-a-string
-    if (pattern[-4:] == "next"):
+    if (pattern.endswith("next")):
         pattern_matched = 0
         for i in range(len(sequence)-1):
             if (sequence[i] == pattern[0] and sequence[i+1] == pattern[0]): 
@@ -34,7 +51,7 @@ def check_pattern(pattern, sequence):
         else:
             print("Sequence valid")
             return 1
-    elif (pattern[-5:] == "space"):
+    elif (pattern.endswith("space")):
         pattern_matched = 0
         for i in range(len(sequence)-2):
             if (sequence[i] == pattern[0] and sequence[i+2] == pattern[0]): 
@@ -46,10 +63,22 @@ def check_pattern(pattern, sequence):
         else:
             print("Sequence valid")
 
-check_pattern("r_next", sequence1)
-check_pattern("r_space", sequence2)
+def draw_text(text, x, y):
+    # Font render syntax from https://www.pygame.org/docs/ref/font.html?highlight=render#pygame.font.Font.render
+    img = font.render(text, True, BLACK)
+    screen.blit(img, (x,y))
 
 
-            
+def draw_sequence(seq):
+    for i,color in enumerate(seq):
 
+        if color == "r":
+            c = RED
+        elif color == "g":
+            c = GREEN
+        else:
+            c = BLUE
 
+        # Draw circle syntax from https://www.pygame.org/docs/ref/draw.html#pygame.draw.circle 
+        # Every color is 80 pixels apart
+        pygame.draw.circle(screen, c, (150 + i * 80, 300), 25)
