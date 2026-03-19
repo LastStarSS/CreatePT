@@ -12,7 +12,7 @@ import pygame
 # True = test mode on
 # False = test mode off
 # Allow skipping through screen to quickly see if the elements appear correctly
-display_test = True
+display_test = False
 
 pygame.init()
 
@@ -39,6 +39,8 @@ submit_btn = pygame.Rect(250,520,120,50)
 clear_btn = pygame.Rect(450,520,120,50)
 ready_btn = pygame.Rect(340,540,120,50)
 next_btn = pygame.Rect(680,550,120,50)
+guess_btn = pygame.Rect(340,540,120,50)
+again_btn = pygame.Rect(330,340,160,50)
 
 patterns = ["r_next", "g_next", "b_next", "r_space", "g_space", "b_space"]
 
@@ -69,6 +71,10 @@ guess2_index = None
 dropdown1 = pygame.Rect(300, 165, 200, 40)
 dropdown2 = pygame.Rect(300, 265, 200, 40)
 
+# Result
+result = None
+test_result = "Draw_lose"
+
 def check_pattern(pattern, sequence):
     if (pattern.endswith("next")):
         pattern_matched = 0
@@ -97,6 +103,31 @@ def check_pattern(pattern, sequence):
         else:
             return "valid"
 
+def check_guess():
+    if (patterns[guess1_index] == pattern2 and patterns[guess2_index == pattern1]):
+        return "Draw_win"
+    elif (patterns[guess1_index] == pattern2):
+        return "Player 1"
+    elif (patterns[guess2_index] == pattern1):
+        return "Player 2"
+    else:
+        return "Draw_lose"
+
+def reset():
+    global pattern1
+    global pattern2
+    global sequence
+    global sequence1
+    global sequence2
+    global state
+
+    pattern1 = random.choice(patterns)
+    pattern2 = random.choice(patterns)
+
+    sequence, sequence1, sequence2 = [], [], []
+    
+    state = "ready1"
+    print(f"{sequence}, {sequence1}, {sequence2}")
 
 def draw_text(text, x, y, color = BLACK):
     # Font render syntax from https://www.pygame.org/docs/ref/font.html?highlight=render#pygame.font.Font.render
@@ -140,6 +171,16 @@ def draw_dropdown():
             draw_text(pattern, option.x + 10, option.y + 5)
 
 
+def draw_ready_screen():
+    if (state == "ready1"):
+        draw_text("Player 1's Turn", 300, 50)
+        draw_text("Make sure player 2 don't see the screen!", 120, 300)
+    elif (state == "ready2"):
+        draw_text("Player 2's Turn", 300, 50)
+        draw_text("Make sure player 1 don't see the screen!", 120, 300)
+    pygame.draw.rect(screen, GREEN, ready_btn)
+    draw_text("Ready",357,550)
+    
 def draw_player_screen():
     screen.fill(WHITE)
     if state == "player1":
@@ -195,24 +236,30 @@ def draw_guess_screen():
         draw_text(patterns[guess2_index], 350, 270)
 
     draw_dropdown()
-    # Reusing ready_btn as the guess submit button
-    pygame.draw.rect(screen, GREEN, ready_btn)
+    pygame.draw.rect(screen, GREEN, guess_btn)
     draw_text(
         "Guess",
-        ready_btn.x + 17,
-        ready_btn.y + 10
+        guess_btn.x + 17,
+        guess_btn.y + 10
     )
 
-def draw_ready_screen():
-    if (state == "ready1"):
-        draw_text(f"Player 1's Turn", 300, 50)
-        draw_text("Make sure player 2 don't see the screen!", 120, 300)
-    elif (state == "ready2"):
-        draw_text(f"Player 2's Turn", 300, 50)
-        draw_text("Make sure player 1 don't see the screen!", 120, 300)
-    pygame.draw.rect(screen, GREEN, ready_btn)
-    draw_text("Ready",357,550)
-
+def draw_result_screen():
+    match test_result if display_test else result:
+        case "Player 1":
+            draw_text("Player 1 won!", 320, 190, GREEN)
+        case "Player 2":
+            draw_text("Player 2 won!", 320, 190, GREEN)
+        case "Draw_win":
+            draw_text("Draw!", 370, 190)
+            draw_text("Both players correctly guessed!", 200, 260, GREEN)
+        case "Draw_lose":
+            draw_text("Draw!", 370, 190)
+            draw_text("Both players incorrectly guessed!", 190, 260, RED)
+    pygame.draw.rect(screen, GRAY, again_btn)
+    draw_text(
+        "Play again",
+        again_btn.x + 10,
+        again_btn.y + 10)
 
 def next_state():
     global state
@@ -233,14 +280,16 @@ while running:
         draw_player_screen()
     elif (state == "guess"):
         screen.fill(WHITE)
-        draw_guess_screen()    
+        draw_guess_screen() 
+    elif (state == "result"):
+        screen.fill(WHITE)
+        draw_result_screen()
     
     if (display_test):
         next_btn = pygame.Rect(680, 550, 120, 50)
         pygame.draw.rect(screen, GRAY, next_btn)
         draw_text("Next", 710, 565)
     for event in pygame.event.get():
-
         if (event.type == pygame.QUIT):
             running = False
 
@@ -259,7 +308,7 @@ while running:
                 if (clear_btn.collidepoint(event.pos)):
                     sequence = []
                     draw_player_screen()
-                if submit_btn.collidepoint(event.pos) and len(sequence) == max_length:
+                if (submit_btn.collidepoint(event.pos) and len(sequence) == max_length):
                     if (state == "player1"):
                         match check_pattern(pattern1, sequence):
                             case "valid":
@@ -293,15 +342,15 @@ while running:
 
             if (state == "guess"):
                 # Toggle dropdowns
-                if dropdown1.collidepoint(event.pos) and not dropdown2_open:
+                if (dropdown1.collidepoint(event.pos) and not dropdown2_open):
                     dropdown1_open = not dropdown1_open
                     dropdown2_open = False
-                elif dropdown2.collidepoint(event.pos) and not dropdown1_open:
+                elif (dropdown2.collidepoint(event.pos) and not dropdown1_open):
                     dropdown2_open = not dropdown2_open
                     dropdown1_open = False
 
                 # Select option for dropdown1
-                if dropdown1_open:
+                if (dropdown1_open):
                     for i, pattern in enumerate(patterns):
                         option = pygame.Rect(
                             dropdown1.x,
@@ -317,7 +366,7 @@ while running:
 
 
                 # Select option for dropdown2
-                if dropdown2_open:
+                if (dropdown2_open):
                     for i, pattern in enumerate(patterns):
                         option = pygame.Rect(
                             dropdown2.x,
@@ -330,6 +379,13 @@ while running:
                             dropdown2_open = False
                             screen.fill(WHITE)
                             draw_guess_screen()
+
+                if (guess_btn.collidepoint(event.pos)):
+                    result = check_guess()
+                    next_state()
+            if (state == "result"):
+                if (again_btn.collidepoint(event.pos)):
+                    reset()
             
             if (next_btn.collidepoint(event.pos)):
                 next_state()
