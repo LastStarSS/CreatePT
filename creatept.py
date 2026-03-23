@@ -22,6 +22,7 @@ pygame.display.set_caption("Pattern Game")
 
 # Load system font syntax from https://www.pygame.org/docs/ref/font.html#pygame.font.SysFont
 font = pygame.font.SysFont(None, 40)
+small_font = pygame.font.SysFont(None, 30)
 
 # Colors
 RED = (220,50,50)
@@ -37,15 +38,17 @@ green_btn = pygame.Rect(350,450,120,50)
 blue_btn = pygame.Rect(550,450,120,50)
 submit_btn = pygame.Rect(250,520,120,50)
 clear_btn = pygame.Rect(450,520,120,50)
-ready_btn = pygame.Rect(340,540,120,50)
+ready_btn = pygame.Rect(340,340,120,50)
 next_btn = pygame.Rect(680,550,120,50)
 guess_btn = pygame.Rect(340,540,120,50)
 again_btn = pygame.Rect(330,340,160,50)
+rules_btn = pygame.Rect(0,550,120,50)
 
 patterns = ["r_next", "g_next", "b_next", "r_space", "g_space", "b_space"]
 
-states = ["ready1", "player1", "ready2", "player2", "guess", "result"]
+states = ["rules", "ready1", "player1", "ready2", "player2", "guess", "result"]
 state = "ready1"
+prev_state = None
 
 # Max length of a sequence
 max_length = 5
@@ -74,6 +77,29 @@ dropdown2 = pygame.Rect(300, 265, 200, 40)
 # Result
 result = None
 test_result = "Draw_lose"
+
+# Rules
+rules = ["1. Each player will be given a pattern at random",
+         "2. You will each take turn to make a sequence",
+         "3. The pattern must appear in your sequence once and only once",
+         "4. Once both players have submitted their sequence, you will guess",
+         " each other's pattern based on the sequence they made",
+         "5. A player wins if they correctly guess the other player's pattern",
+         "6. If both players correctly or incorrectly guess, then it is a draw",
+         "Pattern meaning:",
+         "- The first character of your pattern indicate the color you must use:",
+         "    + r: red",
+         "    + g: green",
+         "    + b: blue",
+         "- The phrase at the end of your pattern indicate what type of pattern it is:",
+         "    + next:  2 of the same color are right next to each other",
+         "    + space: 2 of the same color are separated by a color (does not have to be different)",
+         "Examples:",
+         "- Pattern: r_next, Sequence: grrbb (valid)",
+         "- Pattern: b_next, Sequence: rbbbg (invalid, pattern appeared twice)",
+         "- Pattern: g_space, Sequence: brgbg (valid)",
+         "- Pattern: r_space, Sequence: rrrgg (valid)",
+         "- Pattern: g_space, Sequence: ggrrb (invalid, pattern does not appear)"]
 
 def check_pattern(pattern, sequence):
     if (pattern.endswith("next")):
@@ -104,7 +130,7 @@ def check_pattern(pattern, sequence):
             return "valid"
 
 def check_guess():
-    if (patterns[guess1_index] == pattern2 and patterns[guess2_index == pattern1]):
+    if (patterns[guess1_index] == pattern2 and patterns[guess2_index] == pattern1):
         return "Draw_win"
     elif (patterns[guess1_index] == pattern2):
         return "Player 1"
@@ -129,7 +155,7 @@ def reset():
     state = "ready1"
     print(f"{sequence}, {sequence1}, {sequence2}")
 
-def draw_text(text, x, y, color = BLACK):
+def draw_text(text, x, y, color = BLACK, font = font):
     # Font render syntax from https://www.pygame.org/docs/ref/font.html?highlight=render#pygame.font.Font.render
     img = font.render(text, True, color)
     screen.blit(img, (x,y))
@@ -179,7 +205,9 @@ def draw_ready_screen():
         draw_text("Player 2's Turn", 300, 50)
         draw_text("Make sure player 1 don't see the screen!", 120, 300)
     pygame.draw.rect(screen, GREEN, ready_btn)
-    draw_text("Ready",357,550)
+    draw_text("Ready",
+              ready_btn.x + 17,
+              ready_btn.y + 10)
     
 def draw_player_screen():
     screen.fill(WHITE)
@@ -284,16 +312,40 @@ while running:
     elif (state == "result"):
         screen.fill(WHITE)
         draw_result_screen()
+    elif (state == "rules"):
+        screen.fill(WHITE)
+        pygame.draw.rect(screen, GRAY, rules_btn)
+        draw_text("Back", 25, 565)
+        draw_text("Rules", 375, 1)
+        for i,rule in enumerate(rules):
+            draw_text(rule, 10, 30 + 25*i, BLACK, small_font)
     
+    # Draw next_btn if test mode is on
     if (display_test):
         next_btn = pygame.Rect(680, 550, 120, 50)
         pygame.draw.rect(screen, GRAY, next_btn)
         draw_text("Next", 710, 565)
+    if state != "rules":
+        # Draw rules_btn
+        pygame.draw.rect(screen, GRAY, rules_btn)
+        draw_text("Rules", 20, 565)
+    
     for event in pygame.event.get():
         if (event.type == pygame.QUIT):
             running = False
 
         if (event.type == pygame.MOUSEBUTTONDOWN):
+            if (next_btn.collidepoint(event.pos)):
+                next_state()
+            
+            # If not in rules screen, go to rules screen, if not, go back to previous screen
+            if (rules_btn.collidepoint(event.pos)):
+                if (state == "rules"):
+                    state = prev_state
+                else:
+                    prev_state = state
+                    state = "rules"
+
             if (state.startswith("player")):
                 # Check if a button is pressed https://stackoverflow.com/questions/67063079/how-to-check-if-a-button-is-clicked-in-pygame
                 if (red_btn.collidepoint(event.pos) and len(sequence) < max_length):
@@ -386,9 +438,6 @@ while running:
             if (state == "result"):
                 if (again_btn.collidepoint(event.pos)):
                     reset()
-            
-            if (next_btn.collidepoint(event.pos)):
-                next_state()
 
         pygame.display.flip()
 
