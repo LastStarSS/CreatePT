@@ -1,3 +1,10 @@
+# The following library was used to draw the program's GUI: 
+# Pygame - https://github.com/pygame/pygame
+
+# Acknowledgement:
+# Generative AI (ChatGPT) was used to generate x/y coordinates and dimensions for GUI elements
+# of this project to ensure alignment
+
 # Naming scheme:
 # - Red: r 
 # - Green: g
@@ -11,16 +18,15 @@ import pygame
 
 # True = test mode on
 # False = test mode off
-# Allow skipping through screen to quickly see if the elements appear correctly
+# Allow skipping through screens to quickly see if the elements appear correctly
 display_test = False
 
 pygame.init()
 
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Pattern Game")
 
-# Load system font syntax from https://www.pygame.org/docs/ref/font.html#pygame.font.SysFont
+# This function for loading system font was adapted from https://www.pygame.org/docs/ref/font.html#pygame.font.SysFont
 font = pygame.font.SysFont(None, 40)
 small_font = pygame.font.SysFont(None, 30)
 
@@ -33,7 +39,7 @@ BLACK = (0,0,0)
 GRAY = (200,200,200)
 
 # Buttons
-red_btn = pygame.Rect(150,450,120,50) # (left, top, width, height)
+red_btn = pygame.Rect(150,450,120,50) # (x, y, width, height)
 green_btn = pygame.Rect(350,450,120,50)
 blue_btn = pygame.Rect(550,450,120,50)
 submit_btn = pygame.Rect(250,520,120,50)
@@ -57,10 +63,12 @@ max_length = 5
 pattern1 = random.choice(patterns)
 pattern2 = random.choice(patterns)
 
+# Create blank sequences to be recorded later
 sequence = []
 sequence1 = []
 sequence2 = []
 
+# Premade sequences to be used for test mode
 test_sequence1 = ["r", "g", "b", "g", "r"]
 test_sequence2 = ["r", "r", "g", "g", "b"]
 
@@ -76,6 +84,8 @@ dropdown2 = pygame.Rect(300, 265, 200, 40)
 
 # Result
 result = None
+
+# Used for test mode
 test_result = "Draw_lose"
 
 # Rules
@@ -101,6 +111,11 @@ rules = ["1. Each player will be given a pattern at random",
          "- Pattern: r_space, Sequence: rrrgg (valid)",
          "- Pattern: g_space, Sequence: ggrrb (invalid, pattern does not appear)"]
 
+# Check if the provided sequence match the provided pattern
+# Return:
+# - "more" if the pattern appears more than once 
+# - "none" if pattern does not appear
+# - "valid" if the pattern appears only once
 def check_pattern(pattern, sequence):
     if (pattern.endswith("next")):
         pattern_matched = 0
@@ -108,7 +123,6 @@ def check_pattern(pattern, sequence):
             # Check if the color on this index is the same as the next color and if they match the pattern's color
             if (sequence[i] == pattern[0] and sequence[i+1] == pattern[0]): 
                 pattern_matched += 1
-        # Pattern must only appear once in the sequence
         if (pattern_matched > 1):
             return "more"
         elif (pattern_matched == 0):
@@ -121,7 +135,6 @@ def check_pattern(pattern, sequence):
             # Check if the color on this index is the same as the color 2 index away and if they match the pattern's color
             if (sequence[i] == pattern[0] and sequence[i+2] == pattern[0]): 
                 pattern_matched += 1
-        # Pattern must only appear once in the sequence
         if (pattern_matched > 1):
             return "more"
         elif (pattern_matched == 0):
@@ -129,16 +142,24 @@ def check_pattern(pattern, sequence):
         else:
             return "valid"
 
+# Check if either, both, or none of the players guessed correctly
+# Return:
+# - "Draw_win" if both players guessed correctly
+# - "Draw_lose" if both players guessed incorrectly
+# - "Player1" if player 1 guessed correctly but player 2 didn't
+# - "Player2" if player 2 guessed correctly but player 1 didn't
 def check_guess():
     if (patterns[guess1_index] == pattern2 and patterns[guess2_index] == pattern1):
         return "Draw_win"
     elif (patterns[guess1_index] == pattern2):
-        return "Player 1"
+        return "Player1"
     elif (patterns[guess2_index] == pattern1):
-        return "Player 2"
+        return "Player2"
     else:
         return "Draw_lose"
 
+# Reset necessary variables and rerandomize players' patterns
+# Does not return (void)
 def reset():
     global pattern1
     global pattern2
@@ -153,14 +174,17 @@ def reset():
     sequence, sequence1, sequence2 = [], [], []
     
     state = "ready1"
-    print(f"{sequence}, {sequence1}, {sequence2}")
 
+# Draw the provided text at a certain x/y position with color (default BLACK) and font (default systemfont)
+# Does not return (void)
 def draw_text(text, x, y, color = BLACK, font = font):
-    # Font render syntax from https://www.pygame.org/docs/ref/font.html?highlight=render#pygame.font.Font.render
+    # This function for drawing "text" on screen was adapted from https://www.pygame.org/docs/ref/font.html?highlight=render#pygame.font.Font.render
     img = font.render(text, True, color)
     screen.blit(img, (x,y))
 
-def draw_sequence(seq, start_x=250, start_y=320):
+# Draw a sequence of colored circles starting at the provided x/y position
+# Does not return (void)
+def draw_sequence(seq, start_x, start_y):
     for i,color in enumerate(seq):
         if color == "r":
             c = RED
@@ -169,12 +193,15 @@ def draw_sequence(seq, start_x=250, start_y=320):
         else:
             c = BLUE
 
-        # Draw circle syntax from https://www.pygame.org/docs/ref/draw.html#pygame.draw.circle 
-        # Every color is 80 pixels apart
+        # This function for drawing a circle was adapted from https://www.pygame.org/docs/ref/draw.html#pygame.draw.circle 
+        # Every circle is 80 pixels apart
         pygame.draw.circle(screen, c, (start_x + i * 80, start_y), 25)
 
+# Draw dropdown options when they are opened
+# Does not return (void)
 def draw_dropdown():
     if dropdown1_open:
+            # For every pattern available, draw an option
             for i, pattern in enumerate(patterns):
                 option = pygame.Rect(
                     dropdown1.x,
@@ -196,7 +223,8 @@ def draw_dropdown():
             pygame.draw.rect(screen, GRAY, option)
             draw_text(pattern, option.x + 10, option.y + 5)
 
-
+# Draw the ready screen where they are warned to not let the other player see the screen
+# Does not return (void)
 def draw_ready_screen():
     if (state == "ready1"):
         draw_text("Player 1's Turn", 300, 50)
@@ -208,7 +236,9 @@ def draw_ready_screen():
     draw_text("Ready",
               ready_btn.x + 17,
               ready_btn.y + 10)
-    
+
+# Draw the player screen where they are shown their pattern and make their sequence
+# Does not return (void) 
 def draw_player_screen():
     screen.fill(WHITE)
     if state == "player1":
@@ -220,7 +250,7 @@ def draw_player_screen():
 
     draw_text("Sequence:", 100,250)
 
-    draw_sequence(sequence)
+    draw_sequence(sequence, 250, 320)
 
     pygame.draw.rect(screen, RED, red_btn)
     pygame.draw.rect(screen, GREEN, green_btn)
@@ -237,6 +267,8 @@ def draw_player_screen():
         pygame.draw.rect(screen, GRAY, next_btn)
         draw_text("Next", 710, 565)
 
+# Draw the guess screen where players guess each other's pattern
+# Does not return (void)
 def draw_guess_screen():
     draw_text("Both sequences submitted!", 250,50)
     
@@ -271,11 +303,13 @@ def draw_guess_screen():
         guess_btn.y + 10
     )
 
+# Draw the result screen where the winner is announced based on players' guess
+# Does not return (void)
 def draw_result_screen():
     match test_result if display_test else result:
-        case "Player 1":
+        case "Player1":
             draw_text("Player 1 won!", 320, 190, GREEN)
-        case "Player 2":
+        case "Player2":
             draw_text("Player 2 won!", 320, 190, GREEN)
         case "Draw_win":
             draw_text("Draw!", 370, 190)
@@ -289,6 +323,7 @@ def draw_result_screen():
         again_btn.x + 10,
         again_btn.y + 10)
 
+# Change screen to the next screen
 def next_state():
     global state
     print(f"Old state: {state}")
@@ -301,6 +336,7 @@ def next_state():
 running = True
 
 while running:
+    # Drawing screens based on the current state
     if (state.startswith("ready")):
         screen.fill(WHITE)
         draw_ready_screen()
@@ -325,8 +361,8 @@ while running:
         next_btn = pygame.Rect(680, 550, 120, 50)
         pygame.draw.rect(screen, GRAY, next_btn)
         draw_text("Next", 710, 565)
+    # Draw rules_btn
     if state != "rules":
-        # Draw rules_btn
         pygame.draw.rect(screen, GRAY, rules_btn)
         draw_text("Rules", 20, 565)
     
@@ -334,7 +370,10 @@ while running:
         if (event.type == pygame.QUIT):
             running = False
 
+        # This syntax to check if an element is clicked is taken from 
+        # https://stackoverflow.com/questions/67063079/how-to-check-if-a-button-is-clicked-in-pygame
         if (event.type == pygame.MOUSEBUTTONDOWN):
+            # Move to next state when next_btn is clicked
             if (next_btn.collidepoint(event.pos)):
                 next_state()
             
@@ -347,7 +386,8 @@ while running:
                     state = "rules"
 
             if (state.startswith("player")):
-                # Check if a button is pressed https://stackoverflow.com/questions/67063079/how-to-check-if-a-button-is-clicked-in-pygame
+                # Add the corresponding color to sequence when an R/G/B button is clicked and the
+                # sequence is not complete
                 if (red_btn.collidepoint(event.pos) and len(sequence) < max_length):
                     sequence.append("r")
 
@@ -357,9 +397,11 @@ while running:
                 if (blue_btn.collidepoint(event.pos) and len(sequence) < max_length):
                     sequence.append("b")
                 
+                # Clear the sequence in case there is a misclick
                 if (clear_btn.collidepoint(event.pos)):
                     sequence = []
                     draw_player_screen()
+                # Submit the sequence if the sequence is valid, if not, a red warning will show
                 if (submit_btn.collidepoint(event.pos) and len(sequence) == max_length):
                     if (state == "player1"):
                         match check_pattern(pattern1, sequence):
@@ -435,6 +477,7 @@ while running:
                 if (guess_btn.collidepoint(event.pos)):
                     result = check_guess()
                     next_state()
+            # Restart the game if the play again button is clicked
             if (state == "result"):
                 if (again_btn.collidepoint(event.pos)):
                     reset()
