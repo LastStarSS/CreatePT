@@ -30,7 +30,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 font = pygame.font.SysFont(None, 40)
 small_font = pygame.font.SysFont(None, 30)
 
-# Colors
+# Colors (R,G,B)
 RED = (220,50,50)
 GREEN = (50,200,50)
 BLUE = (50,50,220)
@@ -112,7 +112,10 @@ rules = ["1. Each player will be given a pattern at random",
          "- Pattern: g_space, Sequence: ggrrb (invalid, pattern does not appear)"]
 
 # Check if the provided sequence match the provided pattern
-# Return:
+# Parameters:
+# - pattern (string): the pattern to which the sequence will be compared
+# - sequence (list[string]): the sequence that will be compared to the pattern
+# Return (string):
 # - "more" if the pattern appears more than once 
 # - "none" if pattern does not appear
 # - "valid" if the pattern appears only once
@@ -143,7 +146,7 @@ def check_pattern(pattern, sequence):
             return "valid"
 
 # Check if either, both, or none of the players guessed correctly
-# Return:
+# Return (string):
 # - "Draw_win" if both players guessed correctly
 # - "Draw_lose" if both players guessed incorrectly
 # - "Player1" if player 1 guessed correctly but player 2 didn't
@@ -176,16 +179,26 @@ def reset():
     state = "ready1"
 
 # Draw the provided text at a certain x/y position with color (default BLACK) and font (default systemfont)
+# Parameter:
+# - text (string): the text to be drawn
+# - start_x (int): the starting x coordinate of the text
+# - start_y (int): the starting y coordinate of the text
+# - color (tuple): the RGB values for the color of the text
+# - font (Font object): the font of the text
 # Does not return (void)
-def draw_text(text, x, y, color = BLACK, font = font):
+def draw_text(text, start_x, start_y, color = BLACK, font = font):
     # This function for drawing "text" on screen was adapted from https://www.pygame.org/docs/ref/font.html?highlight=render#pygame.font.Font.render
     img = font.render(text, True, color)
-    screen.blit(img, (x,y))
+    screen.blit(img, (start_x,start_y))
 
 # Draw a sequence of colored circles starting at the provided x/y position
+# Parameter:
+# - sequence (list[string]): the sequence to be drawn
+# - start_x (int): the starting x coordinate of the sequence
+# - start_y (int): the starting y coordinate of the sequence
 # Does not return (void)
-def draw_sequence(seq, start_x, start_y):
-    for i,color in enumerate(seq):
+def draw_sequence(sequence, start_x, start_y):
+    for i,color in enumerate(sequence):
         if color == "r":
             c = RED
         elif color == "g":
